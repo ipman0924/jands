@@ -214,10 +214,6 @@ def lookup_single_sku(
     sam_df: pd.DataFrame,
     dd_df: pd.DataFrame,
 ) -> dict:
-    """
-    Resolve one entry. Either vendor_sku or jands_sku_hint must be non-empty.
-    If only JANDS SKU is given, resolve vendor SKU from SAM first.
-    """
     sam_by_vendor = sam_df.set_index("Vendor Item No.")
     sam_by_jands  = sam_df.set_index("No.")
     dd_by_vendor  = dd_df.set_index("VendorStockCode") if "VendorStockCode" in dd_df.columns else pd.DataFrame()
@@ -225,7 +221,6 @@ def lookup_single_sku(
     vsku = vendor_sku.strip()
     jsku = jands_sku_hint.strip()
 
-    # If vendor SKU not provided, resolve from JANDS SKU
     if not vsku and jsku:
         if jsku in sam_by_jands.index:
             jr = sam_by_jands.loc[jsku]
@@ -347,7 +342,6 @@ def build_display_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_totals_row(display_df: pd.DataFrame, raw_df: pd.DataFrame) -> pd.DataFrame:
-    """Append a TOTALS row (qty-weighted sums for price columns)."""
     qty = pd.to_numeric(raw_df.get("qty", pd.Series([1] * len(raw_df))), errors="coerce").fillna(1)
 
     def weighted_sum(col_name: str) -> str:
@@ -392,12 +386,11 @@ def style_table(df_display: pd.DataFrame) -> object:
         return [""] * len(row)
 
     styler = df_display.style.apply(style_row, axis=1)
+    map_fn = "map" if hasattr(styler, "map") else "applymap"
     if "vs Competitor ($)" in df_display.columns:
-        styler = styler.map(color_diff, subset=["vs Competitor ($)"])
+        styler = getattr(styler, map_fn)(color_diff, subset=["vs Competitor ($)"])
     if "New % to Match" in df_display.columns:
-        styler = styler.map37
-        37
-        (
+        styler = getattr(styler, map_fn)(
             lambda v: "font-weight: bold" if v not in ("N/A", "") else "",
             subset=["New % to Match"],
         )
