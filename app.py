@@ -393,9 +393,11 @@ def style_table(df_display: pd.DataFrame) -> object:
 
     styler = df_display.style.apply(style_row, axis=1)
     if "vs Competitor ($)" in df_display.columns:
-        styler = styler.applymap(color_diff, subset=["vs Competitor ($)"])
+        styler = styler.map(color_diff, subset=["vs Competitor ($)"])
     if "New % to Match" in df_display.columns:
-        styler = styler.applymap(
+        styler = styler.map37
+        37
+        (
             lambda v: "font-weight: bold" if v not in ("N/A", "") else "",
             subset=["New % to Match"],
         )
